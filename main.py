@@ -30,9 +30,15 @@ def main() -> int:
     dest = os.path.join(out_dir, "entry.png")
     shutil.copyfile(SOURCE, dest)
     # The grader collects outputs as another user: leave the file
-    # world-readable (mode 0644) and the directory 0755.
-    os.chmod(dest, 0o644)
-    os.chmod(out_dir, 0o755)
+    # world-readable (mode 0644) and the directory 0755 where we can.
+    # Best effort only: the grader runs as an unprivileged user that
+    # does not own the output directory, so chmod on it raises
+    # PermissionError (that exact failure rejected the first entry).
+    for path, mode in ((dest, 0o644), (out_dir, 0o755)):
+        try:
+            os.chmod(path, mode)
+        except OSError:
+            pass
     print("wrote", dest)
     return 0
 
